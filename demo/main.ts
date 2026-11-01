@@ -27,14 +27,14 @@ function render() {
 
 function questionView(): string {
   const position = step.kind === 'emotion' ? 1 : step.kind === 'question' ? step.index + 2 : totalSteps;
-  const back = position > 1 ? '<button class="ghost" data-action="back">← back</button>' : '<span></span>';
-  const header = `<div class="topbar">${back}<span class="progress" aria-label="step ${position} of ${totalSteps}">${position} / ${totalSteps}</span></div>
+  const back = position > 1 ? '<button class="ghost" data-action="back">← voltar</button>' : '<span></span>';
+  const header = `<div class="topbar">${back}<span class="progress" aria-label="passo ${position} de ${totalSteps}">${position} / ${totalSteps}</span></div>
     <div class="bar"><div style="width:${(position / totalSteps) * 100}%"></div></div>`;
 
   if (step.kind === 'emotion') {
     return `${header}
-      <p class="eyebrow">what should i cook tonight?</p>
-      <h1 tabindex="-1">first things first. how are you feeling?</h1>
+      <p class="eyebrow">o que eu cozinho hoje?</p>
+      <h1 tabindex="-1">primeiro o mais importante. como você tá?</h1>
       <div class="options">${quiz.emotions.map((e) => choice('emotion', e.id, e.label, input.emotion === e.id)).join('')}</div>`;
   }
 
@@ -46,19 +46,19 @@ function questionView(): string {
   }
 
   return `${header}
-    <h2 tabindex="-1">any rules?</h2>
-    <p class="hint">time is a hard limit. the craving is just a nudge.</p>
-    <fieldset><legend>how long have you got?</legend>
+    <h2 tabindex="-1">alguma regra?</h2>
+    <p class="hint">o tempo é limite de verdade. o desejo é só um empurrãozinho.</p>
+    <fieldset><legend>quanto tempo você tem?</legend>
       <div class="chips">${quiz.timeLimits
         .map((t) => chip('time', String(t.minutes), t.label, (input.maxMinutes ?? null) === t.minutes))
         .join('')}</div>
     </fieldset>
-    <fieldset><legend>craving anything?</legend>
-      <div class="chips">${[{ tag: '', label: 'surprise me' }, ...quiz.cravings]
+    <fieldset><legend>tá com vontade de algo?</legend>
+      <div class="chips">${[{ tag: '', label: 'me surpreenda' }, ...quiz.cravings]
         .map((c) => chip('craving', c.tag, c.label, (input.craving ?? '') === c.tag))
         .join('')}</div>
     </fieldset>
-    <button class="primary" data-action="finish">show me dinner</button>`;
+    <button class="primary" data-action="finish">me mostra o jantar</button>`;
 }
 
 function resultView(result: Result): string {
@@ -71,30 +71,30 @@ function resultView(result: Result): string {
 
   const cards = result.top.length
     ? result.top.map(card).join('')
-    : '<p class="hint">nothing fits that time limit. maybe order in?</p>';
+    : '<p class="hint">nada cabe nesse tempo. que tal pedir delivery?</p>';
 
-  return `<p class="eyebrow">you are</p>
+  return `<p class="eyebrow">seu perfil é</p>
     <h1 tabindex="-1">${escape(result.profile.name)}</h1>
     <p class="lede">${escape(result.profile.blurb)}</p>
     <ol class="cards">${cards}</ol>
-    <details><summary>show the math</summary>
-      <p class="hint">your answers, as a mix of the five dimensions. dishes are ranked by how closely their own mix matches yours (cosine similarity).</p>
+    <details><summary>mostrar a conta</summary>
+      <p class="hint">suas respostas, como uma mistura das cinco dimensões. os pratos são ordenados pelo quanto a mistura deles se parece com a sua (similaridade de cosseno).</p>
       <ul class="mix">${mix}</ul>
     </details>
-    <button class="primary" data-action="restart">start over</button>`;
+    <button class="primary" data-action="restart">começar de novo</button>`;
 }
 
 function card(r: Recommendation, rank: number): string {
   const why = r.reasons
-    .map((x) => `<li><strong>${escape(dimLabel(x.dimension))}</strong> <span>you ${pct(x.you)} · it ${pct(x.item)}</span></li>`)
+    .map((x) => `<li><strong>${escape(dimLabel(x.dimension))}</strong> <span>você ${pct(x.you)} · prato ${pct(x.item)}</span></li>`)
     .join('');
   return `<li class="card">
     <div class="rank">${rank + 1}</div>
     <div>
       <h3>${escape(r.item.name)}</h3>
       <p>${escape(r.item.blurb)}</p>
-      <p class="meta">${r.item.minutes} min · ${pct(Math.min(r.score, 1))} match${r.craved ? ' · <span class="badge">matches your craving</span>' : ''}</p>
-      <ul class="why" aria-label="why this dish">${why}</ul>
+      <p class="meta">${r.item.minutes} min · combina ${pct(Math.min(r.score, 1))}${r.craved ? ' · <span class="badge">bate com o seu desejo</span>' : ''}</p>
+      <ul class="why" aria-label="por que este prato">${why}</ul>
     </div>
   </li>`;
 }

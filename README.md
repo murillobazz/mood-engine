@@ -19,33 +19,33 @@ Quando a pessoa sabe o que quer, ela usa filtros. Quando não sabe, filtro não 
 
 Gente indecisa escolhe pelo humor. Então, em vez de filtros, o quiz pergunta como você está e faz umas perguntas de lado (o tempo lá fora, quem vai comer, o que você acha de lavar louça), transforma isso num perfil de gosto e te dá três pratos, cada um com um motivo curto. Limite de tempo e desejo também existem, mas vêm por último e são opcionais.
 
-A demo e o catálogo estão em inglês; o código é comentado em português.
+Tudo está em português: demo, catálogo, comentários, testes e relatório. Só os identificadores do código (ids, funções, variáveis) ficam em inglês.
 
 ## como a pontuação funciona
 
 ```mermaid
 flowchart LR
-  E["emoção<br/>4 pts × 1.25"] --> S
+  E["emoção<br/>4 pts × 1,25"] --> S
   Q["5 respostas<br/>3 pts cada × 1"] --> S
   S["pontuação por dimensão<br/>cozy · bold · fresh · playful · calm"] --> P["perfil<br/>as 2 dimensões mais fortes"]
   S --> R["ranking dos pratos<br/>similaridade de cosseno"]
   F["limite de tempo<br/>(filtro rígido)"] --> R
-  C["desejo<br/>(bônus de +0.04)"] --> R
+  C["desejo<br/>(bônus de +0,04)"] --> R
   R --> T["top 3 + porquê"]
 ```
 
 1. **Pontos.** São cinco dimensões: `cozy` (aconchego), `bold` (intenso), `fresh` (fresco), `playful` (mão na massa) e `calm` (sossego). Toda emoção distribui 4 pontos entre elas e toda resposta distribui 3. Dentro de uma pergunta, nenhuma opção grita mais que outra (a auditoria confere).
-2. **Pesos.** Cada fonte de pontos tem um multiplicador. A emoção ganha 1.25 porque é a porta de entrada do quiz; cada pergunta ganha 1. Tudo isso fica em [`src/weights.ts`](src/weights.ts), com comentários explicando cada número.
-3. **Perfil.** Suas duas dimensões mais fortes dão nome ao seu perfil: `cozy + calm` é "the slow simmer", `bold + fresh` é "citrus fire", e por aí vai (10 pares, 10 perfis). Com pontos inteiros pequenos, empate acontece muito, então ele é desfeito de propósito: primeiro pelo que a emoção apontou, depois pela ordem das dimensões.
+2. **Pesos.** Cada fonte de pontos tem um multiplicador. A emoção ganha 1,25 porque é a porta de entrada do quiz; cada pergunta ganha 1. Tudo isso fica em [`src/weights.ts`](src/weights.ts), com comentários explicando cada número.
+3. **Perfil.** Suas duas dimensões mais fortes dão nome ao seu perfil: `cozy + calm` é "fogo baixo", `bold + fresh` é "fogo cítrico", e por aí vai (10 pares, 10 perfis). Com pontos inteiros pequenos, empate acontece muito, então ele é desfeito de propósito: primeiro pelo que a emoção apontou, depois pela ordem das dimensões.
 4. **Ranking.** Todo prato tem uma afinidade de 0 a 1 com cada dimensão. Os pratos são ordenados pela [similaridade de cosseno](https://pt.wikipedia.org/wiki/Similaridade_por_cosseno) entre a sua pontuação e as afinidades deles. Escolhi cosseno em vez de produto escalar puro de propósito: o produto escalar premia pratos que são "um pouco de tudo", seja quem for que pergunte. O cosseno só olha o formato do match.
-5. **Filtro e preferência.** O limite de tempo é um filtro rígido: uma sopa de 2 horas não aparece quando você tem 20 minutos. O desejo é suave: soma 0.04 aos pratos que batem, o que sobe eles uma ou duas posições, mas não passa por cima do seu humor.
-6. **Porquê.** Pra cada prato, o motor diz quais dimensões você e o prato têm em comum: `calm — you 59% · it 90%`.
+5. **Filtro e preferência.** O limite de tempo é um filtro rígido: uma sopa de 2 horas não aparece quando você tem 20 minutos. O desejo é suave: soma 0,04 aos pratos que batem, o que sobe eles uma ou duas posições, mas não passa por cima do seu humor.
+6. **Porquê.** Pra cada prato, o motor diz quais dimensões você e o prato têm em comum: `sossego — você 59% · prato 90%`.
 
 Tudo é função pura sobre dados simples: [`scoreAnswers`](src/engine.ts), [`pickProfile`](src/engine.ts), [`rankItems`](src/engine.ts) e [`recommend`](src/engine.ts), que junta as três.
 
 ## o catálogo
 
-Tudo inventado, tudo em [`src/data/`](src/data): 5 emoções ("drained. send help (carbs)", "fed up with everything"...), 5 perguntas, 10 perfis, 20 receitas. São objetos TypeScript simples, então dá pra ler como um arquivo de configuração, e o compilador pega dimensão escrita errada.
+Tudo inventado, tudo em [`src/data/`](src/data): 5 emoções ("no bagaço. mandem ajuda (carboidrato)", "de saco cheio de tudo"...), 5 perguntas, 10 perfis, 20 receitas. São objetos TypeScript simples, então dá pra ler como um arquivo de configuração, e o compilador pega dimensão escrita errada.
 
 ## por que a auditoria existe
 
@@ -62,16 +62,16 @@ Nada disso aparece numa demo. Tudo isso aparece quando você roda todas as combi
 
 ## o que a auditoria checa
 
-`pnpm audit:engine` passa todas as combinações de emoção × respostas pelo motor de verdade (uns 170ms) e grava um relatório em Markdown. O exemplo commitado é [`audit/reports/default.md`](audit/reports/default.md). O relatório é gerado em inglês; os nomes das checagens abaixo são os mesmos que aparecem nele.
+`pnpm audit:engine` passa todas as combinações de emoção × respostas pelo motor de verdade (uns 170ms) e grava um relatório em Markdown. O exemplo commitado é [`audit/reports/default.md`](audit/reports/default.md). Os nomes das checagens abaixo são os mesmos que aparecem nele.
 
 | checagem | pergunta que responde | sinaliza quando |
 | --- | --- | --- |
-| **influence** | uma resposta decide tudo? | uma fonte sozinha explica > 30% do prato #1 ou do perfil, ou uma pergunta explica < 2% |
-| **lock-in** | escolher uma resposta escolhe o prato? | uma resposta faz o mesmo prato ser #1 em > 50% das combinações dela |
-| **coverage** | todo prato tem uma chance? | um prato nunca chega em #1, nunca aparece, ou é #1 mais de 3× a sua fatia justa |
-| **profiles** | alguma personalidade é impossível ou está em todo lugar? | um perfil é inalcançável ou passa de 2.5× a fatia uniforme |
-| **stability** | o que acontece se você muda uma resposta? | > 15% das trocas substituem o top 3 inteiro (instável) ou > 80% não mudam nada (grudado) |
-| **data** | os próprios dados estão equilibrados? | uma opção distribui mais pontos que as irmãs; um limite de tempo deixa < 3 pratos |
+| **influência** | uma resposta decide tudo? | uma fonte sozinha explica > 30% do prato #1 ou do perfil, ou uma pergunta explica < 2% |
+| **trava** | escolher uma resposta escolhe o prato? | uma resposta faz o mesmo prato ser #1 em > 50% das combinações dela |
+| **cobertura** | todo prato tem uma chance? | um prato nunca chega em #1, nunca aparece, ou é #1 mais de 3× a sua fatia justa |
+| **perfis** | alguma personalidade é impossível ou está em todo lugar? | um perfil é inalcançável ou passa de 2,5× a fatia uniforme |
+| **estabilidade** | o que acontece se você muda uma resposta? | > 15% das trocas substituem o top 3 inteiro (instável) ou > 80% não mudam nada (grudado) |
+| **dados** (orçamento, filtros) | os próprios dados estão equilibrados? | uma opção distribui mais pontos que as irmãs; um limite de tempo deixa < 3 pratos |
 
 "Explica" é a [informação mútua](https://pt.wikipedia.org/wiki/Informa%C3%A7%C3%A3o_m%C3%BAtua) como fatia da entropia do resultado: o quanto saber aquela resposta te diz sobre o resultado. 0% quer dizer nada; 100% quer dizer que dá pra adivinhar o prato só por aquela resposta.
 
@@ -90,7 +90,7 @@ Os detectores são testados em simulações falsas pequenas ([`test/detectors.te
 | a emoção explica o prato #1 | **41,0%** ⚠️ | 19,5% |
 | a emoção explica o perfil | **50,9%** ⚠️ | 22,0% |
 | `company` / `dishes` / `appetite` explicam o prato #1 | **1,5% / 1,5% / 1,4%** ⚠️ | 4,1% / 5,9% / 4,1% |
-| `buzzing` → summer rolls como #1 | **51,6%** ⚠️ | 23,8% |
+| `buzzing` → `summer-rolls` (rolinhos vietnamitas) como #1 | **51,6%** ⚠️ | 23,8% |
 | uma troca substitui o top 3 inteiro | **16,8%** ⚠️ | 12,5% |
 | sinalizações | **6** | **0** |
 

@@ -2,7 +2,7 @@
   "name": "mood-engine",
   "version": "0.1.0",
   "private": true,
-  "description": "A tiny recommendation engine that picks what to cook by how you feel, plus an audit that checks whether the scoring is actually fair.",
+  "description": "Um motor de recomendação minúsculo que escolhe o que cozinhar pelo seu humor, mais uma auditoria que confere se a pontuação é justa de verdade.",
   "type": "module",
   "license": "MIT",
   "author": "Murillo Bazilio",

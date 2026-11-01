@@ -29,7 +29,7 @@ const { values } = parseArgs({
 const name = values.weights;
 const weights = WEIGHT_SETS[name];
 if (!weights) {
-  console.error(`Unknown weight set "${name}". Try: ${Object.keys(WEIGHT_SETS).join(', ')}`);
+  console.error(`Conjunto de pesos desconhecido "${name}". Opções: ${Object.keys(WEIGHT_SETS).join(', ')}`);
   process.exit(2);
 }
 
@@ -42,7 +42,7 @@ mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, markdown);
 
 const ms = Math.round(performance.now() - started);
-console.log(`audited ${sim.outcomes.length} combos in ${ms}ms -> ${out}`);
-console.log(flags.length ? `${flags.length} flag(s):\n${flags.map((f) => `  - [${f.check}] ${f.message}`).join('\n')}` : 'no flags.');
+console.log(`${sim.outcomes.length} combinações auditadas em ${ms}ms -> ${out}`);
+console.log(flags.length ? `${flags.length} sinalização(ões):\n${flags.map((f) => `  - [${f.check}] ${f.message}`).join('\n')}` : 'nenhuma sinalização.');
 
 if (values.strict && flags.length) process.exit(1);

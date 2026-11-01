@@ -30,9 +30,10 @@ export interface Flag {
   message: string;
 }
 
-const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
+/** Porcentagem com vírgula decimal, do jeito que se lê no Brasil: 0.123 -> "12,3%". */
+export const pct = (x: number) => `${(x * 100).toFixed(1).replace('.', ',')}%`;
 
-// --- 1. influence: uma resposta (ou a emoção) decide tudo? -----------------------------------
+// --- 1. influência: uma resposta (ou a emoção) decide tudo? -----------------------------------
 
 export interface Influence {
   source: string;
@@ -66,11 +67,11 @@ export function measureInfluence(sim: Simulation): { rows: Influence[]; flags: F
     const loudest = Math.max(row.explainsTop, row.explainsProfile);
     if (loudest > THRESHOLDS.dominant) {
       flags.push({
-        check: 'influence',
-        message: `\`${row.source}\` dominates: it alone explains ${pct(row.explainsTop)} of the #1 dish and ${pct(row.explainsProfile)} of the profile.`,
+        check: 'influência',
+        message: `\`${row.source}\` domina: sozinha, explica ${pct(row.explainsTop)} do prato #1 e ${pct(row.explainsProfile)} do perfil.`,
       });
     } else if (row.explainsTop < THRESHOLDS.decoration) {
-      flags.push({ check: 'influence', message: `\`${row.source}\` is decoration: it explains only ${pct(row.explainsTop)} of the #1 dish.` });
+      flags.push({ check: 'influência', message: `\`${row.source}\` é decoração: explica só ${pct(row.explainsTop)} do prato #1.` });
     }
   }
   return { rows, flags };
@@ -108,7 +109,7 @@ function entropy(counts: Map<string, number>): number {
   return h;
 }
 
-// --- 2. lock-in: uma única resposta escolhe o prato, não importa o resto? -----------------
+// --- 2. trava: uma única resposta escolhe o prato, não importa o resto? -------------------
 
 export interface LockIn {
   source: string;
@@ -139,11 +140,11 @@ export function findLockIns(sim: Simulation): { rows: LockIn[]; flags: Flag[] } 
 
   const flags = rows
     .filter((r) => r.share > THRESHOLDS.lockIn)
-    .map((r) => ({ check: 'lock-in', message: `picking \`${r.source}=${r.option}\` makes \`${r.item}\` #1 in ${pct(r.share)} of combos.` }));
+    .map((r) => ({ check: 'trava', message: `escolher \`${r.source}=${r.option}\` faz \`${r.item}\` ser #1 em ${pct(r.share)} das combinações.` }));
   return { rows, flags };
 }
 
-// --- 3. coverage: todo item tem uma chance? -----------------------------------------------
+// --- 3. cobertura: todo item tem uma chance? ----------------------------------------------
 
 export interface Coverage {
   item: string;
@@ -167,16 +168,16 @@ export function measureCoverage(sim: Simulation): { rows: Coverage[]; flags: Fla
   const fair = 1 / sim.itemIds.length;
   const flags: Flag[] = [];
   for (const row of rows) {
-    if (row.appearances === 0) flags.push({ check: 'coverage', message: `\`${row.item}\` never appears in any top 3.` });
-    else if (row.firsts === 0) flags.push({ check: 'coverage', message: `\`${row.item}\` never reaches #1 (shows up in ${row.appearances} top 3s).` });
+    if (row.appearances === 0) flags.push({ check: 'cobertura', message: `\`${row.item}\` nunca aparece em nenhum top 3.` });
+    else if (row.firsts === 0) flags.push({ check: 'cobertura', message: `\`${row.item}\` nunca chega em #1 (aparece em ${row.appearances} top 3).` });
     else if (row.firsts / n > fair * THRESHOLDS.hogShare) {
-      flags.push({ check: 'coverage', message: `\`${row.item}\` is #1 in ${pct(row.firsts / n)} of combos (fair share is ${pct(fair)}).` });
+      flags.push({ check: 'cobertura', message: `\`${row.item}\` é #1 em ${pct(row.firsts / n)} das combinações (a fatia justa é ${pct(fair)}).` });
     }
   }
   return { rows, flags };
 }
 
-// --- 4. profiles: alguma personalidade é impossível, ou está em todo lugar? ----------------
+// --- 4. perfis: alguma personalidade é impossível, ou está em todo lugar? ----------------
 
 export interface ProfileShare {
   profile: string;
@@ -200,15 +201,15 @@ export function measureProfiles(sim: Simulation): { rows: ProfileShare[]; entrop
   const fair = 1 / sim.profileIds.length;
   const flags: Flag[] = [];
   for (const row of rows) {
-    if (row.count === 0) flags.push({ check: 'profiles', message: `profile \`${row.profile}\` is unreachable.` });
+    if (row.count === 0) flags.push({ check: 'perfis', message: `o perfil \`${row.profile}\` é inalcançável.` });
     else if (row.share > fair * THRESHOLDS.profileSkew) {
-      flags.push({ check: 'profiles', message: `profile \`${row.profile}\` gets ${pct(row.share)} of people (uniform would be ${pct(fair)}).` });
+      flags.push({ check: 'perfis', message: `o perfil \`${row.profile}\` recebe ${pct(row.share)} das pessoas (o uniforme seria ${pct(fair)}).` });
     }
   }
   return { rows, entropy, flags };
 }
 
-// --- 5. stability: mudar uma resposta muda demais, ou nada? ------------------------------
+// --- 5. estabilidade: mudar uma resposta muda demais, ou nada? ---------------------------
 
 export interface Stability {
   pairs: number;
@@ -245,10 +246,10 @@ export function measureStability(sim: Simulation): { stats: Stability; flags: Fl
 
   const flags: Flag[] = [];
   if (stats.fullyReplaced > THRESHOLDS.jumpy) {
-    flags.push({ check: 'stability', message: `jumpy: ${pct(stats.fullyReplaced)} of single-answer changes replace the whole top 3.` });
+    flags.push({ check: 'estabilidade', message: `instável: ${pct(stats.fullyReplaced)} das trocas de uma única resposta substituem o top 3 inteiro.` });
   }
   if (stats.identical > THRESHOLDS.sticky) {
-    flags.push({ check: 'stability', message: `sticky: ${pct(stats.identical)} of single-answer changes leave the top 3 untouched.` });
+    flags.push({ check: 'estabilidade', message: `grudado: ${pct(stats.identical)} das trocas de uma única resposta deixam o top 3 intacto.` });
   }
   return { stats, flags };
 }
@@ -278,7 +279,7 @@ export function checkPointBudgets(quiz: Quiz): { rows: Budget[]; flags: Flag[] }
 
   const flags = rows
     .filter((r) => r.median > 0 && Math.abs(r.points - r.median) / r.median > THRESHOLDS.budgetDrift)
-    .map((r) => ({ check: 'budget', message: `\`${r.source}=${r.option}\` hands out ${r.points} points; its siblings hand out ~${r.median}.` }));
+    .map((r) => ({ check: 'orçamento', message: `\`${r.source}=${r.option}\` distribui ${r.points} pontos; as irmãs distribuem ~${r.median}.` }));
   return { rows, flags };
 }
 
@@ -297,7 +298,7 @@ export function checkTimeLimits(quiz: Quiz): { rows: Eligibility[]; flags: Flag[
   }));
   const flags = rows
     .filter((r) => r.eligible < THRESHOLDS.minEligible)
-    .map((r) => ({ check: 'filters', message: `time limit "${r.label}" leaves only ${r.eligible} item(s).` }));
+    .map((r) => ({ check: 'filtros', message: `o limite de tempo "${r.label}" deixa só ${r.eligible} item(ns).` }));
   return { rows, flags };
 }
 

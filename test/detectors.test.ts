@@ -33,8 +33,8 @@ function fakeSim(sizes: number[], outcomeOf: (digits: number[]) => Outcome, item
   };
 }
 
-describe('simulate helpers', () => {
-  it('decode and swap agree', () => {
+describe('auxiliares do simulate', () => {
+  it('decode e swap concordam entre si', () => {
     const sim = fakeSim([2, 3, 4], () => ({ top: ['x'], profile: 'p' }));
     const index = 17;
     const digits = decode(sim.sources, index);
@@ -46,18 +46,18 @@ describe('simulate helpers', () => {
 });
 
 describe('measureInfluence', () => {
-  it('flags a source that decides everything, and the ones that decide nothing', () => {
+  it('sinaliza a fonte que decide tudo e as que não decidem nada', () => {
     // Só a fonte 0 importa.
     const sim = fakeSim([3, 3, 3], ([a]) => ({ top: [`i${a}`], profile: `p${a}` }));
     const { rows, flags } = measureInfluence(sim);
     expect(rows[0]!.explainsTop).toBeCloseTo(1);
     expect(rows[1]!.explainsTop).toBeCloseTo(0);
     expect(rows[0]!.flipRate).toBe(1);
-    expect(flags.map((f) => f.message).join('\n')).toMatch(/s0` dominates/);
-    expect(flags.filter((f) => f.message.includes('decoration'))).toHaveLength(2);
+    expect(flags.map((f) => f.message).join('\n')).toMatch(/s0` domina/);
+    expect(flags.filter((f) => f.message.includes('decoração'))).toHaveLength(2);
   });
 
-  it('stays quiet when every source contributes equally', () => {
+  it('fica quieto quando todas as fontes contribuem igual', () => {
     // O #1 é a soma dos dígitos mod 3: toda fonte importa igualmente, e nenhuma explica o resultado sozinha.
     const sim = fakeSim([3, 3, 3], (d) => {
       const k = d.reduce((x, y) => x + y, 0) % 3;
@@ -70,66 +70,66 @@ describe('measureInfluence', () => {
 });
 
 describe('findLockIns', () => {
-  it('flags an answer that picks the #1 no matter what else is said', () => {
+  it('sinaliza uma resposta que escolhe o #1 não importa o que mais for dito', () => {
     const sim = fakeSim([2, 4], ([a, b]) => ({ top: [a === 0 ? 'always' : `i${b}`], profile: 'p' }));
     const { flags } = findLockIns(sim);
     expect(flags).toHaveLength(1);
-    expect(flags[0]!.message).toContain('`s0=o0` makes `always` #1 in 100.0%');
+    expect(flags[0]!.message).toContain('`s0=o0` faz `always` ser #1 em 100,0%');
   });
 });
 
 describe('measureCoverage', () => {
-  it('flags items that never win, never show up, or win too much', () => {
+  it('sinaliza itens que nunca vencem, nunca aparecem ou vencem demais', () => {
     const sim = fakeSim(
       [10],
       ([a]) => ({ top: a! < 8 ? ['hog', 'runner-up'] : [`i${a}`, 'runner-up'], profile: 'p' }),
       ['hog', 'runner-up', 'ghost', 'i8', 'i9'],
     );
     const messages = measureCoverage(sim).flags.map((f) => f.message);
-    expect(messages).toContain('`ghost` never appears in any top 3.');
-    expect(messages).toContain('`runner-up` never reaches #1 (shows up in 10 top 3s).');
-    expect(messages.some((m) => m.startsWith('`hog` is #1 in 80.0%'))).toBe(true);
+    expect(messages).toContain('`ghost` nunca aparece em nenhum top 3.');
+    expect(messages).toContain('`runner-up` nunca chega em #1 (aparece em 10 top 3).');
+    expect(messages.some((m) => m.startsWith('`hog` é #1 em 80,0%'))).toBe(true);
   });
 });
 
 describe('measureProfiles', () => {
-  it('scores a uniform spread as perfectly even', () => {
+  it('considera uma distribuição uniforme perfeitamente equilibrada', () => {
     const sim = fakeSim([4], ([a]) => ({ top: ['x'], profile: `p${a}` }));
     const { entropy, flags } = measureProfiles(sim);
     expect(entropy).toBeCloseTo(1);
     expect(flags).toHaveLength(0);
   });
 
-  it('flags unreachable and overrepresented profiles', () => {
+  it('sinaliza perfis inalcançáveis e super-representados', () => {
     const sim = fakeSim([10], ([a]) => ({ top: ['x'], profile: a! < 9 ? 'popular' : 'rare' }), undefined, ['popular', 'rare', 'never', 'n2', 'n3']);
     const messages = measureProfiles(sim).flags.map((f) => f.message);
-    expect(messages).toContain('profile `never` is unreachable.');
-    expect(messages.some((m) => m.startsWith('profile `popular` gets 90.0%'))).toBe(true);
+    expect(messages).toContain('o perfil `never` é inalcançável.');
+    expect(messages.some((m) => m.startsWith('o perfil `popular` recebe 90,0%'))).toBe(true);
   });
 });
 
 describe('measureStability', () => {
-  it('calls an engine that never changes "sticky"', () => {
+  it('chama de "grudado" um motor que nunca muda', () => {
     const sim = fakeSim([3, 3], () => ({ top: ['a', 'b', 'c'], profile: 'p' }));
     const { stats, flags } = measureStability(sim);
     expect(stats.identical).toBe(1);
     expect(stats.meanOverlap).toBe(3);
-    expect(flags[0]!.message).toMatch(/^sticky/);
+    expect(flags[0]!.message).toMatch(/^grudado/);
   });
 
-  it('calls an engine that reshuffles everything "jumpy"', () => {
+  it('chama de "instável" um motor que embaralha tudo', () => {
     // Cada combinação ganha um top 3 próprio, sem nada em comum com as outras.
     const sim = fakeSim([3, 3], ([a, b]) => ({ top: ['x', 'y', 'z'].map((id) => `${id}${a}${b}`), profile: 'p' }));
     const { stats, flags } = measureStability(sim);
     expect(stats.fullyReplaced).toBe(1);
-    expect(flags[0]!.message).toMatch(/^jumpy/);
+    expect(flags[0]!.message).toMatch(/^instável/);
   });
 });
 
-describe('data checks', () => {
+describe('checagens dos dados', () => {
   const base: Quiz = { ...quiz };
 
-  it('flags an option that hands out more points than its siblings', () => {
+  it('sinaliza uma opção que distribui mais pontos que as irmãs', () => {
     const loud: Quiz = {
       ...base,
       questions: [{ id: 'q', prompt: 'q', options: [
@@ -139,25 +139,25 @@ describe('data checks', () => {
       ] }],
     };
     const { flags } = checkPointBudgets(loud);
-    expect(flags.map((f) => f.message)).toEqual(['`q=loud` hands out 6 points; its siblings hand out ~3.']);
+    expect(flags.map((f) => f.message)).toEqual(['`q=loud` distribui 6 pontos; as irmãs distribuem ~3.']);
   });
 
-  it('flags a time limit that leaves too few items', () => {
-    const { flags } = checkTimeLimits({ ...base, timeLimits: [{ label: 'five minutes', minutes: 5 }] });
-    expect(flags[0]!.message).toBe('time limit "five minutes" leaves only 0 item(s).');
+  it('sinaliza um limite de tempo que deixa poucos itens', () => {
+    const { flags } = checkTimeLimits({ ...base, timeLimits: [{ label: 'cinco minutos', minutes: 5 }] });
+    expect(flags[0]!.message).toBe('o limite de tempo "cinco minutos" deixa só 0 item(ns).');
   });
 });
 
-describe('the real audit', () => {
-  it('passes the shipped weights', () => {
+describe('a auditoria de verdade', () => {
+  it('aprova os pesos usados', () => {
     const { flags } = buildReport(quiz, defaultWeights, simulate(quiz, defaultWeights), 'default');
     expect(flags).toEqual([]);
   });
 
-  it('catches the unbalanced weights from the README', () => {
+  it('pega os pesos desbalanceados do README', () => {
     const { flags } = buildReport(quiz, unbalancedWeights, simulate(quiz, unbalancedWeights), 'unbalanced');
     const messages = flags.map((f) => f.message);
-    expect(messages.some((m) => m.startsWith('`emotion` dominates'))).toBe(true);
-    expect(messages.filter((m) => m.includes('decoration')).length).toBeGreaterThan(0);
+    expect(messages.some((m) => m.startsWith('`emotion` domina'))).toBe(true);
+    expect(messages.filter((m) => m.includes('decoração')).length).toBeGreaterThan(0);
   });
 });

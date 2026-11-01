@@ -13,14 +13,14 @@ export function scoreAnswers(quiz: Quiz, input: Input, weights: Weights = defaul
   const scores = Object.fromEntries(quiz.dimensions.map((d) => [d.id, 0]));
 
   const emotion = quiz.emotions.find((e) => e.id === input.emotion);
-  if (!emotion) throw new Error(`Unknown emotion "${input.emotion}"`);
+  if (!emotion) throw new Error(`Emoção desconhecida "${input.emotion}"`);
   addPoints(scores, emotion.points, weights.emotion);
 
   for (const question of quiz.questions) {
     const optionId = input.answers[question.id];
     if (optionId === undefined) continue;
     const option = question.options.find((o) => o.id === optionId);
-    if (!option) throw new Error(`Unknown option "${optionId}" for question "${question.id}"`);
+    if (!option) throw new Error(`Opção desconhecida "${optionId}" na pergunta "${question.id}"`);
     addPoints(scores, option.points, weights.questions[question.id] ?? 1);
   }
 
@@ -40,10 +40,10 @@ export function pickProfile(quiz: Quiz, scores: Points, emotionPoints: Points = 
     .sort((a, b) => b.score - a.score || b.mood - a.mood || a.index - b.index);
 
   const [first, second] = ranked;
-  if (!first || !second) throw new Error('A quiz needs at least two dimensions');
+  if (!first || !second) throw new Error('Um quiz precisa de pelo menos duas dimensões');
 
   const profile = quiz.profiles.find((p) => p.dimensions.includes(first.id) && p.dimensions.includes(second.id));
-  if (!profile) throw new Error(`No profile for dimensions "${first.id}" + "${second.id}"`);
+  if (!profile) throw new Error(`Nenhum perfil para as dimensões "${first.id}" + "${second.id}"`);
   return profile;
 }
 
@@ -122,7 +122,7 @@ function cosine(a: Points, b: Points, dims: readonly string[]): number {
 
 function addPoints(target: Record<string, number>, points: Points, weight: number): void {
   for (const [d, value] of Object.entries(points)) {
-    if (!(d in target)) throw new Error(`Unknown dimension "${d}"`);
+    if (!(d in target)) throw new Error(`Dimensão desconhecida "${d}"`);
     target[d] = (target[d] ?? 0) + value * weight;
   }
 }

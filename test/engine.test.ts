@@ -46,58 +46,58 @@ const mini: Quiz = {
 };
 
 describe('scoreAnswers', () => {
-  it('adds the emotion and every answer, weighted', () => {
+  it('soma a emoção e cada resposta, com peso', () => {
     const scores = scoreAnswers(mini, { emotion: 'happy', answers: { q1: 'x', q2: 'z' } }, flat);
     expect(scores).toEqual({ a: 2, b: 3, c: 1 });
   });
 
-  it('multiplies emotion and per-question weights', () => {
+  it('multiplica pelos pesos da emoção e de cada pergunta', () => {
     const weights: Weights = { emotion: 3, questions: { q2: 0.5 }, cravingBonus: 0 };
     const scores = scoreAnswers(mini, { emotion: 'happy', answers: { q1: 'x', q2: 'z' } }, weights);
     expect(scores).toEqual({ a: 6, b: 2, c: 1 });
   });
 
-  it('ignores unanswered questions', () => {
+  it('ignora perguntas sem resposta', () => {
     expect(scoreAnswers(mini, { emotion: 'meh', answers: {} }, flat)).toEqual({ a: 0, b: 0, c: 1 });
   });
 
-  it('rejects unknown emotions and options', () => {
-    expect(() => scoreAnswers(mini, { emotion: 'ecstatic', answers: {} }, flat)).toThrow(/Unknown emotion/);
-    expect(() => scoreAnswers(mini, { emotion: 'happy', answers: { q1: 'nope' } }, flat)).toThrow(/Unknown option/);
+  it('rejeita emoções e opções desconhecidas', () => {
+    expect(() => scoreAnswers(mini, { emotion: 'ecstatic', answers: {} }, flat)).toThrow(/Emoção desconhecida/);
+    expect(() => scoreAnswers(mini, { emotion: 'happy', answers: { q1: 'nope' } }, flat)).toThrow(/Opção desconhecida/);
   });
 });
 
 describe('pickProfile', () => {
-  it('uses the two strongest dimensions', () => {
+  it('usa as duas dimensões mais fortes', () => {
     expect(pickProfile(mini, { a: 2, b: 3, c: 1 }).id).toBe('ab');
     expect(pickProfile(mini, { a: 0, b: 5, c: 4 }).id).toBe('bc');
   });
 
-  it("breaks ties by the emotion's points first", () => {
+  it('desempata primeiro pelos pontos da emoção', () => {
     // a, b e c empatam. A emoção apontou para c, então c entra.
     expect(pickProfile(mini, { a: 1, b: 1, c: 1 }, { c: 1 }).id).toBe('ac');
   });
 
-  it('falls back to dimension order when the emotion is no help', () => {
+  it('cai na ordem das dimensões quando a emoção não ajuda', () => {
     expect(pickProfile(mini, { a: 1, b: 1, c: 1 }).id).toBe('ab');
   });
 });
 
 describe('rankItems', () => {
-  it('matches on shape, so "a bit of everything" does not win by default', () => {
+  it('compara pelo formato, então "um pouco de tudo" não vence por padrão', () => {
     // Um produto escalar coroaria a-bit-of-everything aqui; o cosseno escolhe o match honesto.
     const top = rankItems(mini, { a: 5, b: 0, c: 0 }, {}, flat);
     expect(top.map((r) => r.item.id)).toEqual(['only-a', 'a-bit-of-everything', 'only-b']);
     expect(top[0]!.score).toBeCloseTo(1);
   });
 
-  it('drops items over the time limit (hard filter)', () => {
+  it('remove itens acima do limite de tempo (filtro rígido)', () => {
     const top = rankItems(mini, { a: 0, b: 5, c: 0 }, { maxMinutes: 30 }, flat);
     expect(top.map((r) => r.item.id)).not.toContain('only-b');
     expect(top).toHaveLength(2);
   });
 
-  it('gives the craved tag a small bonus (soft preference)', () => {
+  it('dá um bônus pequeno à tag desejada (preferência suave)', () => {
     const scores = { a: 1, b: 1, c: 1 };
     const without = rankItems(mini, scores, {}, flat);
     const withCraving = rankItems(mini, scores, { craving: 'quick' }, flat);
@@ -109,28 +109,28 @@ describe('rankItems', () => {
     expect(withCraving[0]!.item.id).toBe('a-bit-of-everything');
   });
 
-  it('returns at most the limit and breaks ties by id', () => {
+  it('devolve no máximo o limite e desempata pelo id', () => {
     const twins: Quiz = { ...mini, items: [item('zeta', { a: 1 }), item('alpha', { a: 1 })] };
     expect(rankItems(twins, { a: 1 }, {}, flat, 1).map((r) => r.item.id)).toEqual(['alpha']);
   });
 });
 
 describe('explain', () => {
-  it('names where person and item meet, strongest first', () => {
+  it('aponta onde pessoa e item se encontram, do mais forte pro mais fraco', () => {
     const reasons = explain({ a: 3, b: 1, c: 0 }, item('x', { a: 0.5, b: 0.3, c: 1 }), ['a', 'b', 'c']);
     // c é a melhor dimensão do item, mas a pessoa fez 0 nela, então não vira motivo.
     expect(reasons.map((r) => r.dimension)).toEqual(['a']);
     expect(reasons[0]).toEqual({ dimension: 'a', you: 0.75, item: 0.5 });
   });
 
-  it('keeps a second reason when it is at least half as strong', () => {
+  it('mantém um segundo motivo quando ele tem pelo menos metade da força', () => {
     const reasons = explain({ a: 2, b: 2, c: 0 }, item('x', { a: 1, b: 0.6, c: 1 }), ['a', 'b', 'c']);
     expect(reasons.map((r) => r.dimension)).toEqual(['a', 'b']);
   });
 });
 
-describe('recommend (real catalog)', () => {
-  it('sends a drained couch person to something calm and cozy', () => {
+describe('recommend (catálogo real)', () => {
+  it('manda quem tá no bagaço, no sofá, pra algo sossegado e aconchegante', () => {
     const result = recommend(quiz, {
       emotion: 'drained',
       answers: { weather: 'drizzle', company: 'solo', dishes: 'one-pan', soundtrack: 'lofi', appetite: 'starving' },
@@ -140,7 +140,7 @@ describe('recommend (real catalog)', () => {
     expect(result.top[0]!.reasons.map((r) => r.dimension)).toContain('calm');
   });
 
-  it('respects a 20-minute limit end to end', () => {
+  it('respeita um limite de 20 minutos de ponta a ponta', () => {
     const result = recommend(quiz, {
       emotion: 'restless',
       answers: { weather: 'crisp', company: 'crowd', dishes: 'whatever', soundtrack: 'brass', appetite: 'grazing' },
@@ -150,16 +150,16 @@ describe('recommend (real catalog)', () => {
   });
 });
 
-describe('catalog data', () => {
+describe('dados do catálogo', () => {
   const dims = quiz.dimensions.map((d) => d.id);
 
-  it('has exactly one profile for every pair of dimensions', () => {
+  it('tem exatamente um perfil para cada par de dimensões', () => {
     const pairs = quiz.profiles.map((p) => [...p.dimensions].sort().join('+'));
     expect(new Set(pairs).size).toBe(pairs.length);
     expect(pairs).toHaveLength((dims.length * (dims.length - 1)) / 2);
   });
 
-  it('only uses known dimensions, and every item rates all of them in 0..1', () => {
+  it('só usa dimensões conhecidas, e todo item avalia todas elas entre 0 e 1', () => {
     const options = [...quiz.emotions, ...quiz.questions.flatMap((q) => q.options)];
     for (const o of options) expect(dims).toEqual(expect.arrayContaining(Object.keys(o.points)));
     for (const i of quiz.items) {
@@ -171,12 +171,12 @@ describe('catalog data', () => {
     }
   });
 
-  it('has unique ids', () => {
+  it('tem ids únicos', () => {
     const ids = [...quiz.items, ...quiz.emotions, ...quiz.profiles].map((x) => x.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('ships weights that are positive', () => {
+  it('usa pesos positivos', () => {
     expect(defaultWeights.emotion).toBeGreaterThan(0);
     expect(Object.values(defaultWeights.questions).every((w) => w > 0)).toBe(true);
   });

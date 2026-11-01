@@ -13,15 +13,15 @@ export const quiz: Quiz = {
   profiles,
   items: recipes,
   timeLimits: [
-    { label: "i've got all night", minutes: null },
-    { label: 'about an hour and a half', minutes: 90 },
-    { label: 'under 45 minutes', minutes: 45 },
-    { label: '20 minutes, tops', minutes: 20 },
+    { label: 'tenho a noite toda', minutes: null },
+    { label: 'mais ou menos uma hora e meia', minutes: 90 },
+    { label: 'menos de 45 minutos', minutes: 45 },
+    { label: '20 minutos, no máximo', minutes: 20 },
   ],
   cravings: [
-    { tag: 'vegetarian', label: 'something green' },
-    { tag: 'spicy', label: 'heat' },
-    { tag: 'noodles', label: 'noodles, obviously' },
-    { tag: 'sweet', label: 'dessert for dinner' },
+    { tag: 'vegetarian', label: 'algo verde' },
+    { tag: 'spicy', label: 'ardência' },
+    { tag: 'noodles', label: 'macarrão, óbvio' },
+    { tag: 'sweet', label: 'sobremesa de jantar' },
   ],
 };
