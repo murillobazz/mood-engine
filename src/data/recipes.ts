@@ -3,8 +3,8 @@ import type { DimPoints } from './dimensions';
 
 type Recipe = Item & { affinity: Required<DimPoints> };
 
-// The catalog. Affinities go from 0 (not at all) to 1 (this is the whole point of the dish).
-// Every recipe scores every dimension, so a missing number is a typo, not a zero.
+// O catálogo. Afinidades vão de 0 (nada a ver) a 1 (é a razão de existir do prato).
+// Toda receita pontua todas as dimensões, então um número faltando é erro de digitação, não zero.
 export const recipes: readonly Recipe[] = [
   {
     id: 'miso-butter-noodles', name: 'miso butter noodles', minutes: 15, tags: ['noodles', 'vegetarian'],

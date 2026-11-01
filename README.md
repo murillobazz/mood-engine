@@ -1,127 +1,129 @@
 # mood-engine
 
-A tiny recommendation engine that picks **what to cook tonight based on how you feel**, plus an **audit** that runs every possible combination of answers to check that the scoring is actually fair.
+Um motor de recomendação minúsculo que escolhe **o que cozinhar hoje com base em como você está se sentindo**, mais uma **auditoria** que roda todas as combinações possíveis de respostas pra conferir se a pontuação é justa de verdade.
 
-The engine is about 130 lines of TypeScript with no runtime dependencies. The audit is the interesting part.
+O motor tem umas 130 linhas de TypeScript e nenhuma dependência em runtime. A parte interessante é a auditoria.
 
 ```bash
 pnpm install
-pnpm test           # 32 tests: scoring, profiles, filters, and the audit's detectors
-pnpm audit:engine   # simulates all 3,840 answer combos -> audit/reports/default.md
-pnpm dev            # the demo, on http://localhost:5173
+pnpm test           # 32 testes: pontuação, perfis, filtros e os detectores da auditoria
+pnpm audit:engine   # simula todas as 3.840 combinações -> audit/reports/default.md
+pnpm dev            # a demo, em http://localhost:5173
 ```
 
-Needs Node 20+ and pnpm.
+Precisa de Node 20+ e pnpm.
 
-## the idea
+## a ideia
 
-When people know what they want, they use filters. When they don't, filters are useless: "vegetarian, under 45 minutes" still leaves you staring at 40 options.
+Quando a pessoa sabe o que quer, ela usa filtros. Quando não sabe, filtro não ajuda: "vegetariano, menos de 45 minutos" ainda te deixa encarando 40 opções.
 
-Undecided people choose by mood. So instead of filters, the quiz asks how you feel and a few sideways questions (the weather, who's eating, how you feel about washing up), turns that into a taste profile, and gives you three dishes with a short reason for each. A time limit and a craving are there too, but they come last and they're optional.
+Gente indecisa escolhe pelo humor. Então, em vez de filtros, o quiz pergunta como você está e faz umas perguntas de lado (o tempo lá fora, quem vai comer, o que você acha de lavar louça), transforma isso num perfil de gosto e te dá três pratos, cada um com um motivo curto. Limite de tempo e desejo também existem, mas vêm por último e são opcionais.
 
-## how scoring works
+A demo e o catálogo estão em inglês; o código é comentado em português.
+
+## como a pontuação funciona
 
 ```mermaid
 flowchart LR
-  E["emotion<br/>4 pts × 1.25"] --> S
-  Q["5 answers<br/>3 pts each × 1"] --> S
-  S["dimension scores<br/>cozy · bold · fresh · playful · calm"] --> P["profile<br/>top 2 dimensions"]
-  S --> R["rank dishes<br/>cosine similarity"]
-  F["time limit<br/>(hard filter)"] --> R
-  C["craving<br/>(+0.04 bonus)"] --> R
-  R --> T["top 3 + why"]
+  E["emoção<br/>4 pts × 1.25"] --> S
+  Q["5 respostas<br/>3 pts cada × 1"] --> S
+  S["pontuação por dimensão<br/>cozy · bold · fresh · playful · calm"] --> P["perfil<br/>as 2 dimensões mais fortes"]
+  S --> R["ranking dos pratos<br/>similaridade de cosseno"]
+  F["limite de tempo<br/>(filtro rígido)"] --> R
+  C["desejo<br/>(bônus de +0.04)"] --> R
+  R --> T["top 3 + porquê"]
 ```
 
-1. **Points.** There are five dimensions: `cozy`, `bold`, `fresh`, `playful`, `calm`. Every emotion hands out 4 points across them and every answer hands out 3. Within a question no option is louder than another (the audit checks this).
-2. **Weights.** Each source of points has a multiplier. The emotion gets 1.25 because it's the front door of the quiz; every question gets 1. All of it lives in [`src/weights.ts`](src/weights.ts), with comments explaining each number.
-3. **Profile.** Your two strongest dimensions name your profile: `cozy + calm` is "the slow simmer", `bold + fresh` is "citrus fire", and so on (10 pairs, 10 profiles). Ties happen a lot with small integer points, so they're broken on purpose: first by what the emotion pointed at, then by dimension order.
-4. **Ranking.** Every dish has an affinity from 0 to 1 for each dimension. Dishes are ranked by [cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity) between your scores and their affinities. I used cosine instead of a plain dot product on purpose: a dot product rewards dishes that are "a bit of everything" no matter who's asking. Cosine only cares about the shape of the match.
-5. **Filter and preference.** The time limit is a hard filter: a 2-hour soup doesn't show up when you have 20 minutes. The craving is soft: it adds 0.04 to matching dishes, which moves them a spot or two but doesn't override your mood.
-6. **Why.** For each dish, the engine says which dimensions you and the dish share: `calm — you 59% · it 90%`.
+1. **Pontos.** São cinco dimensões: `cozy` (aconchego), `bold` (intenso), `fresh` (fresco), `playful` (mão na massa) e `calm` (sossego). Toda emoção distribui 4 pontos entre elas e toda resposta distribui 3. Dentro de uma pergunta, nenhuma opção grita mais que outra (a auditoria confere).
+2. **Pesos.** Cada fonte de pontos tem um multiplicador. A emoção ganha 1.25 porque é a porta de entrada do quiz; cada pergunta ganha 1. Tudo isso fica em [`src/weights.ts`](src/weights.ts), com comentários explicando cada número.
+3. **Perfil.** Suas duas dimensões mais fortes dão nome ao seu perfil: `cozy + calm` é "the slow simmer", `bold + fresh` é "citrus fire", e por aí vai (10 pares, 10 perfis). Com pontos inteiros pequenos, empate acontece muito, então ele é desfeito de propósito: primeiro pelo que a emoção apontou, depois pela ordem das dimensões.
+4. **Ranking.** Todo prato tem uma afinidade de 0 a 1 com cada dimensão. Os pratos são ordenados pela [similaridade de cosseno](https://pt.wikipedia.org/wiki/Similaridade_por_cosseno) entre a sua pontuação e as afinidades deles. Escolhi cosseno em vez de produto escalar puro de propósito: o produto escalar premia pratos que são "um pouco de tudo", seja quem for que pergunte. O cosseno só olha o formato do match.
+5. **Filtro e preferência.** O limite de tempo é um filtro rígido: uma sopa de 2 horas não aparece quando você tem 20 minutos. O desejo é suave: soma 0.04 aos pratos que batem, o que sobe eles uma ou duas posições, mas não passa por cima do seu humor.
+6. **Porquê.** Pra cada prato, o motor diz quais dimensões você e o prato têm em comum: `calm — you 59% · it 90%`.
 
-Everything is a pure function over plain data: [`scoreAnswers`](src/engine.ts), [`pickProfile`](src/engine.ts), [`rankItems`](src/engine.ts), and [`recommend`](src/engine.ts), which ties them together.
+Tudo é função pura sobre dados simples: [`scoreAnswers`](src/engine.ts), [`pickProfile`](src/engine.ts), [`rankItems`](src/engine.ts) e [`recommend`](src/engine.ts), que junta as três.
 
-## the catalog
+## o catálogo
 
-All fictional, all in [`src/data/`](src/data): 5 emotions ("drained. send help (carbs)", "fed up with everything"...), 5 questions, 10 profiles, 20 recipes. They're plain TypeScript objects, so you can read them like a config file and the compiler catches a misspelled dimension.
+Tudo inventado, tudo em [`src/data/`](src/data): 5 emoções ("drained. send help (carbs)", "fed up with everything"...), 5 perguntas, 10 perfis, 20 receitas. São objetos TypeScript simples, então dá pra ler como um arquivo de configuração, e o compilador pega dimensão escrita errada.
 
-## why the audit exists
+## por que a auditoria existe
 
-I wrote this engine with AI helping. It came together fast and the demo felt right after a few clicks.
+Escrevi esse motor com ajuda de IA. Ele saiu rápido e a demo parecia certa depois de alguns cliques.
 
-That's the problem. "It seems to work" means "it worked for the five combinations I tried". This quiz has 3,840 combinations. A scoring system can look fine on every one you test by hand and still:
+O problema é exatamente esse. "Parece funcionar" quer dizer "funcionou nas cinco combinações que eu testei". Esse quiz tem 3.840 combinações. Um sistema de pontuação pode parecer ok em todas que você testa na mão e mesmo assim:
 
-- let one question decide everything while the others are decoration,
-- have dishes that can never come first, no matter what you answer,
-- send half of everyone to the same profile,
-- reshuffle the whole top 3 when you change one answer, or never change it at all.
+- deixar uma pergunta decidir tudo enquanto as outras são decoração,
+- ter pratos que nunca chegam em primeiro, não importa o que você responda,
+- mandar metade das pessoas pro mesmo perfil,
+- embaralhar o top 3 inteiro quando você muda uma resposta, ou nunca mudar nada.
 
-None of those show up in a demo. All of them show up when you run every combination and count. So the audit does exactly that, and it's part of the workflow: build, audit, adjust, audit again.
+Nada disso aparece numa demo. Tudo isso aparece quando você roda todas as combinações e conta. A auditoria faz exatamente isso, e faz parte do processo: construir, auditar, ajustar, auditar de novo.
 
-## what the audit checks
+## o que a auditoria checa
 
-`pnpm audit:engine` runs every combination of emotion × answers through the real engine (about 170ms), then writes a Markdown report. The committed example is [`audit/reports/default.md`](audit/reports/default.md).
+`pnpm audit:engine` passa todas as combinações de emoção × respostas pelo motor de verdade (uns 170ms) e grava um relatório em Markdown. O exemplo commitado é [`audit/reports/default.md`](audit/reports/default.md). O relatório é gerado em inglês; os nomes das checagens abaixo são os mesmos que aparecem nele.
 
-| check | question it answers | flagged when |
+| checagem | pergunta que responde | sinaliza quando |
 | --- | --- | --- |
-| **influence** | does one answer decide everything? | one source alone explains > 30% of the #1 dish or the profile, or a question explains < 2% |
-| **lock-in** | does picking one answer pick the dish? | one answer makes the same dish #1 in > 50% of its combos |
-| **coverage** | does every dish get a chance? | a dish never reaches #1, never appears, or is #1 more than 3× its fair share |
-| **profiles** | are some personalities impossible or everywhere? | a profile is unreachable or above 2.5× the uniform share |
-| **stability** | what happens if you change one answer? | > 15% of changes replace the whole top 3 (jumpy) or > 80% change nothing (sticky) |
-| **data** | is the data itself balanced? | an option hands out more points than its siblings; a time limit leaves < 3 dishes |
+| **influence** | uma resposta decide tudo? | uma fonte sozinha explica > 30% do prato #1 ou do perfil, ou uma pergunta explica < 2% |
+| **lock-in** | escolher uma resposta escolhe o prato? | uma resposta faz o mesmo prato ser #1 em > 50% das combinações dela |
+| **coverage** | todo prato tem uma chance? | um prato nunca chega em #1, nunca aparece, ou é #1 mais de 3× a sua fatia justa |
+| **profiles** | alguma personalidade é impossível ou está em todo lugar? | um perfil é inalcançável ou passa de 2.5× a fatia uniforme |
+| **stability** | o que acontece se você muda uma resposta? | > 15% das trocas substituem o top 3 inteiro (instável) ou > 80% não mudam nada (grudado) |
+| **data** | os próprios dados estão equilibrados? | uma opção distribui mais pontos que as irmãs; um limite de tempo deixa < 3 pratos |
 
-"Explains" is [mutual information](https://en.wikipedia.org/wiki/Mutual_information) as a share of the outcome's entropy: how much knowing that one answer tells you about the result. 0% means nothing, 100% means you could guess the dish from that answer alone.
+"Explica" é a [informação mútua](https://pt.wikipedia.org/wiki/Informa%C3%A7%C3%A3o_m%C3%BAtua) como fatia da entropia do resultado: o quanto saber aquela resposta te diz sobre o resultado. 0% quer dizer nada; 100% quer dizer que dá pra adivinhar o prato só por aquela resposta.
 
-The thresholds live in [`audit/detectors.ts`](audit/detectors.ts). They're judgment calls for a quiz this size, written down so they can be argued with. Add `--strict` to make the script exit with code 1 when anything is flagged, if you want it in CI.
+Os limites ficam em [`audit/detectors.ts`](audit/detectors.ts). São escolhas de julgamento pra um quiz desse tamanho, escritas pra poderem ser questionadas. Use `--strict` pra fazer o script sair com código 1 quando algo for sinalizado, se quiser isso no CI.
 
-The detectors are tested on small fake simulations ([`test/detectors.test.ts`](test/detectors.test.ts)), and there's a test that runs the full audit on the shipped weights and fails if anything is flagged. Change a weight, break the balance, and `pnpm test` tells you.
+Os detectores são testados em simulações falsas pequenas ([`test/detectors.test.ts`](test/detectors.test.ts)), e tem um teste que roda a auditoria completa nos pesos usados e falha se qualquer coisa for sinalizada. Mudou um peso e quebrou o equilíbrio? `pnpm test` avisa.
 
-## before / after
+## antes / depois
 
-[`audit/weights/unbalanced.ts`](audit/weights/unbalanced.ts) is a deliberately bad weight set: the emotion is multiplied by 3 and the first question by 2 because it "felt important". Click through the demo with it and it seems fine. Every result looks plausible.
+[`audit/weights/unbalanced.ts`](audit/weights/unbalanced.ts) é um conjunto de pesos ruim de propósito: a emoção multiplicada por 3 e a primeira pergunta por 2, porque "parecia importante". Clicando na demo com ele, parece tudo bem. Todo resultado parece plausível.
 
-`pnpm audit:unbalanced` disagrees ([full report](audit/reports/unbalanced.md)):
+`pnpm audit:unbalanced` discorda ([relatório completo](audit/reports/unbalanced.md)):
 
-| | before (`emotion × 3`, `weather × 2`) | after (`emotion × 1.25`, all questions × 1) |
+| | antes (`emotion × 3`, `weather × 2`) | depois (`emotion × 1.25`, todas as perguntas × 1) |
 | --- | --- | --- |
-| emotion explains the #1 dish | **41.0%** ⚠️ | 19.5% |
-| emotion explains the profile | **50.9%** ⚠️ | 22.0% |
-| `company` / `dishes` / `appetite` explain the #1 dish | **1.5% / 1.5% / 1.4%** ⚠️ | 4.1% / 5.9% / 4.1% |
-| `buzzing` → summer rolls as #1 | **51.6%** ⚠️ | 23.8% |
-| one change replaces the whole top 3 | **16.8%** ⚠️ | 12.5% |
-| flags | **6** | **0** |
+| a emoção explica o prato #1 | **41,0%** ⚠️ | 19,5% |
+| a emoção explica o perfil | **50,9%** ⚠️ | 22,0% |
+| `company` / `dishes` / `appetite` explicam o prato #1 | **1,5% / 1,5% / 1,4%** ⚠️ | 4,1% / 5,9% / 4,1% |
+| `buzzing` → summer rolls como #1 | **51,6%** ⚠️ | 23,8% |
+| uma troca substitui o top 3 inteiro | **16,8%** ⚠️ | 12,5% |
+| sinalizações | **6** | **0** |
 
-In plain words: with the bad weights, the first screen picks your dinner and three of the five questions are decoration. You answer them, they show up in the progress bar, and they barely change anything.
+Em português claro: com os pesos ruins, a primeira tela escolhe o seu jantar e três das cinco perguntas são decoração. Você responde, elas aparecem na barra de progresso, e quase não mudam nada.
 
-Two honest notes from building this:
+Duas notas honestas de quando construí isso:
 
-- **My first influence check missed it.** It measured how often changing one answer flips the #1 dish. With the bad weights, changing `company` still flipped it 35% of the time, which looks like it matters. It only shuffled between the few dishes the emotion had already picked. Mutual information caught what the flip rate didn't. The flip rate is still in the report because it's easy to read, but it's not what raises the flag.
-- **The audit doesn't catch everything.** Doubling `weather` makes it the loudest question by far (14.9% vs ~1.5% for the others), but that stays under the line, so only its side effects get flagged. Thresholds are a tool, not a verdict. Read the tables, not just the summary.
+- **Minha primeira checagem de influência deixou passar.** Ela media com que frequência mudar uma resposta trocava o prato #1. Com os pesos ruins, mudar `company` ainda trocava o #1 em 35% das vezes, o que parece importar. Só que ele só alternava entre os poucos pratos que a emoção já tinha escolhido. A informação mútua pegou o que a taxa de troca não pegou. A taxa continua no relatório porque é fácil de ler, mas não é ela que dispara o alerta.
+- **A auditoria não pega tudo.** Dobrar `weather` faz dela de longe a pergunta mais barulhenta (14,9% contra ~1,5% das outras), mas isso fica abaixo da linha, então só os efeitos colaterais são sinalizados. Limite é ferramenta, não veredito. Leia as tabelas, não só o resumo.
 
-## project layout
+## estrutura do projeto
 
 ```
 src/
-  engine.ts        scoring, profile, ranking, "why" (pure functions)
-  weights.ts       every number that changes the outcome, with reasons
+  engine.ts        pontuação, perfil, ranking, "porquê" (funções puras)
+  weights.ts       todo número que muda o resultado, com os motivos
   types.ts
-  data/            the fictional catalog: dimensions, emotions, questions, profiles, recipes
+  data/            o catálogo fictício: dimensões, emoções, perguntas, perfis, receitas
 audit/
-  simulate.ts      runs every combination through the engine
-  detectors.ts     the checks + thresholds
-  report.ts        renders the Markdown report
+  simulate.ts      roda todas as combinações pelo motor
+  detectors.ts     as checagens + os limites
+  report.ts        gera o relatório em Markdown
   run.ts           CLI (pnpm audit:engine)
-  weights/         the deliberately bad weight set
-  reports/         committed example reports
-test/              Vitest: engine + detectors + "the shipped weights pass the audit"
-demo/              Vite + plain TypeScript, no framework
+  weights/         o conjunto de pesos ruim de propósito
+  reports/         relatórios de exemplo commitados
+test/              Vitest: motor + detectores + "os pesos usados passam na auditoria"
+demo/              Vite + TypeScript puro, sem framework
 ```
 
-## clean-room note
+## nota de clean-room
 
-This is a personal project, written from scratch. It's based on a technique I used in client work (scoring a mood-based quiz and auditing it with simulations), but no code, data, questions, weights or content from that project is here. The domain, catalog, dimensions and numbers are all invented for this repo.
+Este é um projeto pessoal, escrito do zero. Ele parte de uma técnica que usei num trabalho para cliente (pontuar um quiz baseado em humor e auditá-lo com simulações), mas nenhum código, dado, pergunta, peso ou conteúdo daquele projeto está aqui. O domínio, o catálogo, as dimensões e os números foram todos inventados para este repositório.
 
-## license
+## licença
 
 MIT

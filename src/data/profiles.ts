@@ -3,7 +3,7 @@ import type { DimensionId } from './dimensions';
 
 type CookingProfile = Profile & { dimensions: readonly [DimensionId, DimensionId] };
 
-// One profile per pair of dimensions (5 choose 2 = 10). A test checks none is missing.
+// Um perfil por par de dimensões (combinação de 5, 2 a 2 = 10). Um teste garante que nenhum falta.
 export const profiles: readonly CookingProfile[] = [
   { id: 'spicy-blanket', name: 'the spicy blanket', dimensions: ['cozy', 'bold'], blurb: 'comfort food, but make it loud.' },
   { id: 'sunday-garden', name: 'the sunday garden', dimensions: ['cozy', 'fresh'], blurb: 'warm plate, something green on top.' },

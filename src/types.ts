@@ -1,21 +1,21 @@
-/** Points or affinities keyed by dimension id. Missing keys count as 0. */
+/** Pontos ou afinidades indexados por id de dimensão. Chave ausente conta como 0. */
 export type Points = Readonly<Record<string, number>>;
 
-/** A named axis of taste, e.g. "cozy" or "fresh". */
+/** Um eixo de gosto com nome, ex.: "cozy" ou "fresh". */
 export interface Dimension {
   id: string;
   label: string;
   blurb: string;
 }
 
-/** One pickable answer. Choosing it adds its points to the person's dimension scores. */
+/** Uma resposta possível. Escolhê-la soma seus pontos à pontuação da pessoa em cada dimensão. */
 export interface Option {
   id: string;
   label: string;
   points: Points;
 }
 
-/** The first screen: how are you feeling? Same shape as an answer, weighted separately. */
+/** A primeira tela: como você tá se sentindo? Mesmo formato de uma resposta, com peso próprio. */
 export type Emotion = Option;
 
 export interface Question {
@@ -24,7 +24,7 @@ export interface Question {
   options: readonly Option[];
 }
 
-/** A label for a person, defined by their two strongest dimensions. */
+/** Um rótulo para a pessoa, definido pelas suas duas dimensões mais fortes. */
 export interface Profile {
   id: string;
   name: string;
@@ -32,7 +32,7 @@ export interface Profile {
   dimensions: readonly [string, string];
 }
 
-/** Something we can recommend. `affinity` says how well it fits each dimension, from 0 to 1. */
+/** Algo que dá pra recomendar. `affinity` diz o quanto ele combina com cada dimensão, de 0 a 1. */
 export interface Item {
   id: string;
   name: string;
@@ -44,17 +44,17 @@ export interface Item {
 
 export interface TimeLimit {
   label: string;
-  /** null means "no limit". */
+  /** null significa "sem limite". */
   minutes: number | null;
 }
 
 export interface Craving {
-  /** Matches an item tag. */
+  /** Corresponde a uma tag de item. */
   tag: string;
   label: string;
 }
 
-/** Everything the engine needs to run a quiz. Pure data, no behaviour. */
+/** Tudo que o motor precisa pra rodar um quiz. Só dados, nenhum comportamento. */
 export interface Quiz {
   dimensions: readonly Dimension[];
   emotions: readonly Emotion[];
@@ -65,39 +65,39 @@ export interface Quiz {
   cravings: readonly Craving[];
 }
 
-/** Every number that changes the outcome. See src/weights.ts for the shipped values and why. */
+/** Todo número que muda o resultado. Veja src/weights.ts para os valores usados e o porquê de cada um. */
 export interface Weights {
-  /** Multiplier on the chosen emotion's points. */
+  /** Multiplicador dos pontos da emoção escolhida. */
   emotion: number;
-  /** Per-question multiplier. Questions not listed use 1. */
+  /** Multiplicador por pergunta. Perguntas fora da lista usam 1. */
   questions: Readonly<Record<string, number>>;
-  /** Added to an item's score (0..1 scale) when it carries the craved tag. */
+  /** Somado à nota de um item (escala 0..1) quando ele tem a tag desejada. */
   cravingBonus: number;
 }
 
-/** What a person told us. */
+/** O que a pessoa nos contou. */
 export interface Input {
   emotion: string;
-  /** questionId -> optionId. Unanswered questions add nothing. */
+  /** questionId -> optionId. Pergunta sem resposta não soma nada. */
   answers: Readonly<Record<string, string>>;
-  /** Hard filter: items that take longer are dropped, not just penalised. */
+  /** Filtro rígido: itens que demoram mais são removidos, não só penalizados. */
   maxMinutes?: number | null;
-  /** Soft preference: items with this tag get a small bonus. */
+  /** Preferência suave: itens com essa tag ganham um bônus pequeno. */
   craving?: string | null;
 }
 
-/** One line of "why": a dimension where the person and the item meet. */
+/** Uma linha do "porquê": uma dimensão onde a pessoa e o item se encontram. */
 export interface Reason {
   dimension: string;
-  /** Share of the person's total score in this dimension (0..1). */
+  /** Fatia da pontuação total da pessoa nesta dimensão (0..1). */
   you: number;
-  /** The item's affinity for this dimension (0..1). */
+  /** A afinidade do item com esta dimensão (0..1). */
   item: number;
 }
 
 export interface Recommendation {
   item: Item;
-  /** Similarity between person and item (0..1), plus the craving bonus if any. */
+  /** Similaridade entre pessoa e item (0..1), mais o bônus de desejo, se houver. */
   score: number;
   reasons: Reason[];
   craved: boolean;

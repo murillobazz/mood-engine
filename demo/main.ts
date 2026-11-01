@@ -2,7 +2,7 @@ import { quiz } from '../src/data';
 import { recommend } from '../src/engine';
 import type { Input, Recommendation, Result } from '../src/types';
 
-// One screen per step: the emotion, each question, then the optional limits.
+// Uma tela por passo: a emoção, cada pergunta e, por fim, os limites opcionais.
 type Step = { kind: 'emotion' } | { kind: 'question'; index: number } | { kind: 'limits' } | { kind: 'result'; result: Result };
 
 const app = document.querySelector<HTMLElement>('#app')!;

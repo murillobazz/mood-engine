@@ -1,7 +1,7 @@
 /**
- * pnpm audit:engine                       -> audits the shipped weights, writes audit/reports/default.md
- * pnpm audit:engine --weights unbalanced  -> audits the bad example, writes audit/reports/unbalanced.md
- * add --strict to exit with code 1 when anything is flagged (handy in CI).
+ * pnpm audit:engine                       -> audita os pesos usados, grava audit/reports/default.md
+ * pnpm audit:engine --weights unbalanced  -> audita o exemplo ruim, grava audit/reports/unbalanced.md
+ * use --strict para sair com código 1 quando algo for sinalizado (útil em CI).
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';

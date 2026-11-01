@@ -1,26 +1,26 @@
 import { recommend } from '../src/engine';
 import type { Quiz, Weights } from '../src/types';
 
-/** Something the person picks: the emotion, or one question. */
+/** Algo que a pessoa escolhe: a emoção, ou uma pergunta. */
 export interface Source {
   id: string;
   label: string;
   options: { id: string; label: string }[];
 }
 
-/** What the engine returned for one combination of answers. */
+/** O que o motor devolveu para uma combinação de respostas. */
 export interface Outcome {
-  /** Item ids, best first. */
+  /** Ids dos itens, do melhor pro pior. */
   top: string[];
   profile: string;
 }
 
 /**
- * Every combination of answers and its outcome.
+ * Toda combinação de respostas e o seu resultado.
  *
- * Combinations are numbered in mixed radix: source 0 (the emotion) is the lowest "digit".
- * That makes "the same answers, but change question 3" a constant-time index lookup,
- * which is what the stability and influence checks lean on.
+ * As combinações são numeradas em base mista: a fonte 0 (a emoção) é o "dígito" menos significativo.
+ * Isso transforma "as mesmas respostas, mas trocando a pergunta 3" numa busca de índice em tempo constante,
+ * que é a base das checagens de estabilidade e influência.
  */
 export interface Simulation {
   sources: Source[];
@@ -30,9 +30,9 @@ export interface Simulation {
 }
 
 /**
- * Runs the engine on every combination (no time limit, no craving: we audit the scoring
- * itself; filters get their own check). 5 emotions x 4x4x3x4x4 answers = 3,840 runs.
- * If a quiz ever grows past a few million combinations, swap this for a seeded random sample.
+ * Roda o motor em todas as combinações (sem limite de tempo, sem desejo: auditamos a pontuação
+ * em si; os filtros têm checagem própria). 5 emoções x 4x4x3x4x4 respostas = 3.840 execuções.
+ * Se um quiz passar de alguns milhões de combinações, troque isto por uma amostra aleatória com seed fixa.
  */
 export function simulate(quiz: Quiz, weights: Weights): Simulation {
   const sources: Source[] = [
@@ -62,7 +62,7 @@ export function simulate(quiz: Quiz, weights: Weights): Simulation {
   };
 }
 
-/** Index -> one option index per source. */
+/** Índice -> um índice de opção por fonte. */
 export function decode(sources: readonly Source[], index: number): number[] {
   const digits: number[] = [];
   let rest = index;
@@ -73,7 +73,7 @@ export function decode(sources: readonly Source[], index: number): number[] {
   return digits;
 }
 
-/** The index of the same combination with source `s` switched to option `option`. */
+/** O índice da mesma combinação, com a fonte `s` trocada para a opção `option`. */
 export function swap(sources: readonly Source[], index: number, s: number, option: number): number {
   let stride = 1;
   for (let i = 0; i < s; i++) stride *= sources[i]!.options.length;
@@ -81,7 +81,7 @@ export function swap(sources: readonly Source[], index: number, s: number, optio
   return index + (option - current) * stride;
 }
 
-/** Calls `fn` for every pair (combination, same combination with exactly one answer changed). */
+/** Chama `fn` para cada par (combinação, mesma combinação com exatamente uma resposta trocada). */
 export function forEachNeighbor(sim: Simulation, fn: (a: Outcome, b: Outcome, source: number) => void): void {
   sim.outcomes.forEach((outcome, index) => {
     const digits = decode(sim.sources, index);

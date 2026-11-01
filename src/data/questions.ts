@@ -3,8 +3,8 @@ import type { DimPoints } from './dimensions';
 
 type CookingQuestion = Question & { options: readonly (Option & { points: DimPoints })[] };
 
-// Every option hands out exactly 3 points, so no single answer is louder than its siblings.
-// The audit's budget check fails if that drifts.
+// Toda opção distribui exatamente 3 pontos, então nenhuma resposta grita mais que as irmãs.
+// A checagem de orçamento de pontos da auditoria acusa se isso sair do trilho.
 export const questions: readonly CookingQuestion[] = [
   {
     id: 'weather',

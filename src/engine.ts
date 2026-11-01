@@ -1,13 +1,13 @@
 import type { Input, Item, Points, Profile, Quiz, Reason, Recommendation, Result, Weights } from './types';
 import { defaultWeights } from './weights';
 
-/** How many recommendations a quiz returns. */
+/** Quantas recomendações um quiz devolve. */
 export const TOP_N = 3;
 
 /**
- * Step 1. Turn answers into dimension scores.
+ * Passo 1. Transforma as respostas em pontuação por dimensão.
  *
- * score[d] = emotion.points[d] * weights.emotion + sum over answers of option.points[d] * weights.questions[q]
+ * score[d] = emotion.points[d] * weights.emotion + soma, em cada resposta, de option.points[d] * weights.questions[q]
  */
 export function scoreAnswers(quiz: Quiz, input: Input, weights: Weights = defaultWeights): Record<string, number> {
   const scores = Object.fromEntries(quiz.dimensions.map((d) => [d.id, 0]));
@@ -28,11 +28,11 @@ export function scoreAnswers(quiz: Quiz, input: Input, weights: Weights = defaul
 }
 
 /**
- * Step 2. The two strongest dimensions name the person's profile.
+ * Passo 2. As duas dimensões mais fortes dão nome ao perfil da pessoa.
  *
- * Ties are common (points are small integers), so they're broken on purpose, not by
- * accident of array order: first by how much the chosen emotion pointed at each dimension
- * (mood comes first in this product), then by dimension order in the data.
+ * Empates são comuns (os pontos são inteiros pequenos), então são desfeitos de propósito, e não
+ * por acaso da ordem do array: primeiro por quanto a emoção escolhida apontou para cada dimensão
+ * (neste produto, o humor vem primeiro), depois pela ordem das dimensões nos dados.
  */
 export function pickProfile(quiz: Quiz, scores: Points, emotionPoints: Points = {}): Profile {
   const ranked = quiz.dimensions
@@ -48,12 +48,12 @@ export function pickProfile(quiz: Quiz, scores: Points, emotionPoints: Points = 
 }
 
 /**
- * Step 3. Rank items by how close their affinity is to the person's scores.
+ * Passo 3. Ordena os itens pela proximidade entre a afinidade deles e a pontuação da pessoa.
  *
- * We use cosine similarity, not a plain dot product: a dot product rewards items that are
- * "a bit of everything" no matter who's asking, cosine only cares about the shape of the match.
- * Items over the time limit are removed (hard filter). Items with the craved tag get
- * `weights.cravingBonus` on top (soft preference). Ties break by id, so results are stable.
+ * Usamos similaridade de cosseno, não produto escalar puro: o produto escalar premia itens que são
+ * "um pouco de tudo", seja quem for que pergunte; o cosseno só olha o formato do match.
+ * Itens acima do limite de tempo saem (filtro rígido). Itens com a tag desejada ganham
+ * `weights.cravingBonus` a mais (preferência suave). Empates são desfeitos pelo id, então o resultado é estável.
  */
 export function rankItems(
   quiz: Quiz,
@@ -76,7 +76,7 @@ export function rankItems(
     .slice(0, limit);
 }
 
-/** The whole quiz in one call: scores, profile and the top 3 with their "why". */
+/** O quiz inteiro numa chamada: pontuação, perfil e o top 3 com o "porquê". */
 export function recommend(quiz: Quiz, input: Input, weights: Weights = defaultWeights): Result {
   const scores = scoreAnswers(quiz, input, weights);
   const emotion = quiz.emotions.find((e) => e.id === input.emotion);
@@ -88,9 +88,9 @@ export function recommend(quiz: Quiz, input: Input, weights: Weights = defaultWe
 }
 
 /**
- * The "why" behind a match: dimensions where both the person and the item are strong.
- * Each dimension contributes share[d] * affinity[d]; we keep the biggest one and anything
- * at least half as big, up to two.
+ * O "porquê" de um match: dimensões em que a pessoa e o item são fortes.
+ * Cada dimensão contribui share[d] * affinity[d]; ficamos com a maior e com qualquer outra
+ * que tenha pelo menos metade dela, até duas.
  */
 export function explain(scores: Points, item: Item, dims: readonly string[]): Reason[] {
   const total = dims.reduce((sum, d) => sum + (scores[d] ?? 0), 0);

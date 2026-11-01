@@ -2,26 +2,26 @@ import type { Quiz } from '../src/types';
 import { decode, forEachNeighbor, type Outcome, type Simulation } from './simulate';
 
 /**
- * Where the audit draws its lines. They're judgment calls, written down so they can be argued with.
+ * Onde a auditoria traça suas linhas. São escolhas de julgamento, escritas pra poderem ser questionadas.
  */
 export const THRESHOLDS = {
-  /** A source (emotion or question) "dominates" if it alone explains more than this of the #1 item or the profile. */
+  /** Uma fonte (emoção ou pergunta) "domina" se sozinha explicar mais que isso do item #1 ou do perfil. */
   dominant: 0.3,
-  /** ...and is "decoration" if it explains less than this of the #1 item. */
+  /** ...e é "decoração" se explicar menos que isso do item #1. */
   decoration: 0.02,
-  /** One answer "locks in" the #1 item if that item wins this share of the combos where it was picked. */
+  /** Uma resposta "trava" o item #1 se ele vencer essa fatia das combinações em que ela foi escolhida. */
   lockIn: 0.5,
-  /** An item "hogs" first place above this multiple of its fair share of #1s. */
+  /** Um item "monopoliza" o primeiro lugar acima deste múltiplo da sua fatia justa de #1. */
   hogShare: 3,
-  /** A profile is overrepresented above this multiple of the uniform share. */
+  /** Um perfil está super-representado acima deste múltiplo da fatia uniforme. */
   profileSkew: 2.5,
-  /** Top 3 is "jumpy" if more than this share of single-answer changes replace all three items. */
+  /** O top 3 é "instável" (jumpy) se mais que essa fatia das trocas de uma resposta substituir os três itens. */
   jumpy: 0.15,
-  /** Top 3 is "sticky" if more than this share of single-answer changes leave it identical. */
+  /** O top 3 é "grudado" (sticky) se mais que essa fatia das trocas de uma resposta deixá-lo idêntico. */
   sticky: 0.8,
-  /** Option point budgets may differ from their question's median by this much (relative). */
+  /** O orçamento de pontos de uma opção pode se afastar da mediana da pergunta até isso (relativo). */
   budgetDrift: 0.25,
-  /** A time limit should leave at least this many items to choose from. */
+  /** Um limite de tempo deve deixar pelo menos essa quantidade de itens pra escolher. */
   minEligible: 3,
 } as const;
 
@@ -32,16 +32,16 @@ export interface Flag {
 
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
 
-// --- 1. influence: does one answer (or the emotion) decide everything? -------------------
+// --- 1. influence: uma resposta (ou a emoção) decide tudo? -----------------------------------
 
 export interface Influence {
   source: string;
   label: string;
-  /** How often changing only this answer changes the #1 item. */
+  /** Com que frequência mudar só esta resposta muda o item #1. */
   flipRate: number;
-  /** How much knowing this answer tells you about the #1 item (0..1, see `explained`). */
+  /** O quanto saber esta resposta diz sobre o item #1 (0..1, veja `explained`). */
   explainsTop: number;
-  /** Same, for the profile. */
+  /** Idem, para o perfil. */
   explainsProfile: number;
 }
 
@@ -77,8 +77,8 @@ export function measureInfluence(sim: Simulation): { rows: Influence[]; flags: F
 }
 
 /**
- * Mutual information between one source and an outcome, as a share of the outcome's entropy:
- * 0 = knowing this answer tells you nothing about the result, 1 = it tells you everything.
+ * Informação mútua entre uma fonte e um resultado, como fatia da entropia do resultado:
+ * 0 = saber esta resposta não diz nada sobre o resultado, 1 = diz tudo.
  */
 export function explained(sim: Simulation, s: number, outcomeOf: (o: Outcome) => string): number {
   const n = sim.outcomes.length;
@@ -108,7 +108,7 @@ function entropy(counts: Map<string, number>): number {
   return h;
 }
 
-// --- 2. lock-in: does a single answer pick the dish no matter what else you say? --------
+// --- 2. lock-in: uma única resposta escolhe o prato, não importa o resto? -----------------
 
 export interface LockIn {
   source: string;
@@ -118,7 +118,7 @@ export interface LockIn {
 }
 
 export function findLockIns(sim: Simulation): { rows: LockIn[]; flags: Flag[] } {
-  // counts[source][option][item] = how often `item` was #1 when `option` was picked
+  // counts[source][option][item] = quantas vezes `item` foi #1 quando `option` foi escolhida
   const counts = sim.sources.map((s) => s.options.map(() => new Map<string, number>()));
   sim.outcomes.forEach((outcome, index) => {
     decode(sim.sources, index).forEach((option, s) => {
@@ -143,7 +143,7 @@ export function findLockIns(sim: Simulation): { rows: LockIn[]; flags: Flag[] } 
   return { rows, flags };
 }
 
-// --- 3. coverage: does every item get a chance? -------------------------------------------
+// --- 3. coverage: todo item tem uma chance? -----------------------------------------------
 
 export interface Coverage {
   item: string;
@@ -176,7 +176,7 @@ export function measureCoverage(sim: Simulation): { rows: Coverage[]; flags: Fla
   return { rows, flags };
 }
 
-// --- 4. profiles: are some personalities impossible, or everywhere? -----------------------
+// --- 4. profiles: alguma personalidade é impossível, ou está em todo lugar? ----------------
 
 export interface ProfileShare {
   profile: string;
@@ -193,7 +193,7 @@ export function measureProfiles(sim: Simulation): { rows: ProfileShare[]; entrop
     .map(([profile, count]) => ({ profile, count, share: n ? count / n : 0 }))
     .sort((a, b) => b.count - a.count || a.profile.localeCompare(b.profile));
 
-  // Normalised Shannon entropy: 1 = perfectly even, 0 = everyone gets the same profile.
+  // Entropia de Shannon normalizada: 1 = perfeitamente equilibrado, 0 = todo mundo cai no mesmo perfil.
   const h = rows.reduce((sum, r) => (r.share > 0 ? sum - r.share * Math.log(r.share) : sum), 0);
   const entropy = rows.length > 1 ? h / Math.log(rows.length) : 1;
 
@@ -208,11 +208,11 @@ export function measureProfiles(sim: Simulation): { rows: ProfileShare[]; entrop
   return { rows, entropy, flags };
 }
 
-// --- 5. stability: does changing one answer change too much, or nothing? ------------------
+// --- 5. stability: mudar uma resposta muda demais, ou nada? ------------------------------
 
 export interface Stability {
   pairs: number;
-  /** Mean number of items shared by the two top 3s (0..3). */
+  /** Média de itens em comum entre os dois top 3 (0..3). */
   meanOverlap: number;
   identical: number;
   firstChanged: number;
@@ -253,7 +253,7 @@ export function measureStability(sim: Simulation): { stats: Stability; flags: Fl
   return { stats, flags };
 }
 
-// --- 6. static checks on the data itself ---------------------------------------------------
+// --- 6. checagens estáticas nos próprios dados --------------------------------------------
 
 export interface Budget {
   source: string;
@@ -262,7 +262,7 @@ export interface Budget {
   median: number;
 }
 
-/** Within one question (or the emotion list), every option should hand out about the same points. */
+/** Dentro de uma pergunta (ou da lista de emoções), toda opção deveria distribuir mais ou menos os mesmos pontos. */
 export function checkPointBudgets(quiz: Quiz): { rows: Budget[]; flags: Flag[] } {
   const groups = [
     { source: 'emotion', options: quiz.emotions },
@@ -288,7 +288,7 @@ export interface Eligibility {
   eligible: number;
 }
 
-/** A hard filter that leaves one or two items isn't a recommendation, it's a coin flip. */
+/** Um filtro rígido que deixa um ou dois itens não é recomendação, é cara ou coroa. */
 export function checkTimeLimits(quiz: Quiz): { rows: Eligibility[]; flags: Flag[] } {
   const rows = quiz.timeLimits.map(({ label, minutes }) => ({
     label,

@@ -5,7 +5,7 @@ import { profiles } from './profiles';
 import { questions } from './questions';
 import { recipes } from './recipes';
 
-/** "what should i cook tonight?" — the fictional catalog the demo and the audit run on. */
+/** "o que eu cozinho hoje?" — o catálogo fictício que a demo e a auditoria usam. */
 export const quiz: Quiz = {
   dimensions,
   emotions,

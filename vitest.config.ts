@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 
-// Separate from vite.config.ts so tests run from the repo root, not demo/.
+// Separado do vite.config.ts para os testes rodarem a partir da raiz do repo, não de demo/.
 export default defineConfig({
   test: {
     include: ['test/**/*.test.ts'],

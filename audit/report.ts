@@ -21,7 +21,7 @@ export interface Audit {
   markdown: string;
 }
 
-/** Runs every detector and renders one Markdown report. Deterministic: same input, same bytes. */
+/** Roda todos os detectores e gera um relatório em Markdown. Determinístico: mesma entrada, mesmos bytes. */
 export function buildReport(quiz: Quiz, weights: Weights, sim: Simulation, name: string): Audit {
   const influence = measureInfluence(sim);
   const lockIns = findLockIns(sim);
@@ -150,7 +150,7 @@ export function buildReport(quiz: Quiz, weights: Weights, sim: Simulation, name:
   return { flags, markdown: md };
 }
 
-/** A tiny text bar; 1.0 means "at the flag line". */
+/** Uma barrinha de texto; 1.0 significa "na linha do alerta". */
 function bar(ratio: number): string {
   const width = 10;
   const filled = Math.max(0, Math.min(width, Math.round(ratio * width)));

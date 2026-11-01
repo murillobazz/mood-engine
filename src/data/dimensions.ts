@@ -1,6 +1,6 @@
 import type { Dimension } from '../types';
 
-// Five axes of "what do i feel like cooking". Order matters only as the last tie-breaker.
+// Cinco eixos de "o que eu tô a fim de cozinhar". A ordem só importa como último critério de desempate.
 export const dimensions = [
   { id: 'cozy', label: 'cozy', blurb: 'warm, soft, a blanket you can eat' },
   { id: 'bold', label: 'bold', blurb: 'heat, funk, flavors that talk back' },

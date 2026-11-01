@@ -16,7 +16,7 @@ const item = (id: string, affinity: Item['affinity'], extra: Partial<Item> = {})
   ...extra,
 });
 
-// A tiny quiz with numbers small enough to check by hand.
+// Um quiz minúsculo, com números pequenos o bastante pra conferir na mão.
 const mini: Quiz = {
   dimensions: [
     { id: 'a', label: 'a', blurb: '' },
@@ -74,7 +74,7 @@ describe('pickProfile', () => {
   });
 
   it("breaks ties by the emotion's points first", () => {
-    // a, b and c are tied. The emotion pointed at c, so c is in.
+    // a, b e c empatam. A emoção apontou para c, então c entra.
     expect(pickProfile(mini, { a: 1, b: 1, c: 1 }, { c: 1 }).id).toBe('ac');
   });
 
@@ -85,7 +85,7 @@ describe('pickProfile', () => {
 
 describe('rankItems', () => {
   it('matches on shape, so "a bit of everything" does not win by default', () => {
-    // A dot product would crown a-bit-of-everything here; cosine picks the honest match.
+    // Um produto escalar coroaria a-bit-of-everything aqui; o cosseno escolhe o match honesto.
     const top = rankItems(mini, { a: 5, b: 0, c: 0 }, {}, flat);
     expect(top.map((r) => r.item.id)).toEqual(['only-a', 'a-bit-of-everything', 'only-b']);
     expect(top[0]!.score).toBeCloseTo(1);
@@ -105,7 +105,7 @@ describe('rankItems', () => {
     const after = withCraving.find((r) => r.item.id === 'only-a')!;
     expect(after.score - before.score).toBeCloseTo(flat.cravingBonus);
     expect(after.craved).toBe(true);
-    // ...but a small bonus doesn't beat a much better match.
+    // ...mas um bônus pequeno não supera um match muito melhor.
     expect(withCraving[0]!.item.id).toBe('a-bit-of-everything');
   });
 
@@ -118,7 +118,7 @@ describe('rankItems', () => {
 describe('explain', () => {
   it('names where person and item meet, strongest first', () => {
     const reasons = explain({ a: 3, b: 1, c: 0 }, item('x', { a: 0.5, b: 0.3, c: 1 }), ['a', 'b', 'c']);
-    // c is the item's best dimension, but the person scored 0 there, so it's no reason.
+    // c é a melhor dimensão do item, mas a pessoa fez 0 nela, então não vira motivo.
     expect(reasons.map((r) => r.dimension)).toEqual(['a']);
     expect(reasons[0]).toEqual({ dimension: 'a', you: 0.75, item: 0.5 });
   });

@@ -16,7 +16,7 @@ import { quiz } from '../src/data';
 import type { Quiz } from '../src/types';
 import { defaultWeights } from '../src/weights';
 
-/** A fake simulation: `sizes` options per source, outcome computed from the chosen option indexes. */
+/** Uma simulação falsa: `sizes` opções por fonte, resultado calculado a partir dos índices escolhidos. */
 function fakeSim(sizes: number[], outcomeOf: (digits: number[]) => Outcome, itemIds?: string[], profileIds?: string[]): Simulation {
   const sources: Source[] = sizes.map((size, s) => ({
     id: `s${s}`,
@@ -47,7 +47,7 @@ describe('simulate helpers', () => {
 
 describe('measureInfluence', () => {
   it('flags a source that decides everything, and the ones that decide nothing', () => {
-    // Only source 0 matters.
+    // Só a fonte 0 importa.
     const sim = fakeSim([3, 3, 3], ([a]) => ({ top: [`i${a}`], profile: `p${a}` }));
     const { rows, flags } = measureInfluence(sim);
     expect(rows[0]!.explainsTop).toBeCloseTo(1);
@@ -58,7 +58,7 @@ describe('measureInfluence', () => {
   });
 
   it('stays quiet when every source contributes equally', () => {
-    // #1 is the sum of the digits mod 3: every source matters exactly as much, none alone explains it.
+    // O #1 é a soma dos dígitos mod 3: toda fonte importa igualmente, e nenhuma explica o resultado sozinha.
     const sim = fakeSim([3, 3, 3], (d) => {
       const k = d.reduce((x, y) => x + y, 0) % 3;
       return { top: [`i${k}`], profile: `p${k}` };
@@ -118,7 +118,7 @@ describe('measureStability', () => {
   });
 
   it('calls an engine that reshuffles everything "jumpy"', () => {
-    // Every combo gets its own disjoint top 3.
+    // Cada combinação ganha um top 3 próprio, sem nada em comum com as outras.
     const sim = fakeSim([3, 3], ([a, b]) => ({ top: ['x', 'y', 'z'].map((id) => `${id}${a}${b}`), profile: 'p' }));
     const { stats, flags } = measureStability(sim);
     expect(stats.fullyReplaced).toBe(1);

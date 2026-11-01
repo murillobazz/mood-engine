@@ -3,8 +3,8 @@ import type { DimPoints } from './dimensions';
 
 type CookingEmotion = Emotion & { points: DimPoints };
 
-// Every emotion hands out exactly 4 points. How loud that is next to the questions is
-// decided in src/weights.ts, not here.
+// Toda emoção distribui exatamente 4 pontos. O quanto isso pesa perto das perguntas
+// é decidido em src/weights.ts, não aqui.
 export const emotions: readonly CookingEmotion[] = [
   { id: 'drained', label: 'drained. send help (carbs)', points: { calm: 3, cozy: 1 } },
   { id: 'homesick', label: 'a bit homesick', points: { cozy: 3, calm: 1 } },
