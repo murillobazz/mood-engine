@@ -1,0 +1,33 @@
+{
+  "name": "mood-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A tiny recommendation engine that picks what to cook by how you feel, plus an audit that checks whether the scoring is actually fair.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Murillo Bazilio",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "audit:engine": "tsx audit/run.ts",
+    "audit:unbalanced": "tsx audit/run.ts --weights unbalanced"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.5",
+    "vitest": "^3.2.7"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
